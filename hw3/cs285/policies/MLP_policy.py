@@ -109,6 +109,22 @@ class MLPPolicy(BasePolicy):
     def get_action(self, obs):
 
         # TODO: GETTHIS from HW1
+        if len(obs.shape)>1:
+            observation = obs
+        else:
+            observation = obs[None]
+
+        # TODO return the action that the policy prescribes
+        # HINT1: you will need to call self.sess.run
+        # HINT2: the tensor we're interested in evaluating is self.sample_ac
+        # HINT3: in order to run self.sample_ac, it will need observation fed into the feed_dict
+        # DONE
+        sampled_ac = self.sess.run(self.sample_ac, feed_dict={self.observations_pl:observation})
+        # print("=====================================")
+        # print(sampled_ac)
+        # print(len(sampled_ac))
+        # print("=====================================")
+        return sampled_ac
 
 #####################################################
 #####################################################
@@ -122,6 +138,84 @@ class MLPPolicy(BasePolicy):
 
 class MLPPolicyPG(MLPPolicy):
     # TODO: GETTHIS from HW2
+    def define_placeholders(self):
+        self.observations_pl = tf.placeholder(shape=[None, self.ob_dim], name="ob", dtype=tf.float32)
+
+        if self.discrete:
+            self.actions_pl = tf.placeholder(shape=[None], name="ac", dtype=tf.int32)
+        else:
+            self.actions_pl = tf.placeholder(shape=[None, self.ac_dim], name="ac", dtype=tf.float32)
+
+        if self.training:
+            self.adv_n = tf.placeholder(shape=[None], name="adv", dtype=tf.float32)
+            if self.nn_baseline:
+                self.targets_n = tf.placeholder(shape=[None], name="baseline_target", dtype=tf.float32)
+
+    #########################
+
+    def define_train_op(self):
+        self.define_log_prob()
+        # TODO: define the loss that should be optimized when training a policy with policy gradient
+        # HINT1: Recall that the expression that we want to MAXIMIZE
+            # is the expectation over collected trajectories of:
+            # sum_{t=0}^{T-1} [grad [log pi(a_t|s_t) * (Q_t - b_t)]]
+        # HINT2: see define_log_prob (above)
+            # to get log pi(a_t|s_t)
+        # HINT3: look for a placeholder above that will be populated with advantage values 
+            # to get [Q_t - b_t]
+        # HINT4: don't forget that we need to MINIMIZE this self.loss
+            # but the equation above is something that should be maximized
+        # DONE
+        self.loss = tf.reduce_sum(-(self.logprob_n * self.adv_n))
+
+        # TODO: define what exactly the optimizer should minimize when updating the policy
+        # DONE
+        self.train_op = tf.train.AdamOptimizer(self.learning_rate).minimize(self.loss)
+
+        if self.nn_baseline:
+            # TODO: define the loss that should be optimized for training the baseline
+            # HINT1: use tf.losses.mean_squared_error, similar to SL loss from hw1
+            # HINT2: we want predictions (self.baseline_prediction) to be as close as possible to the labels (self.targets_n)
+                # see 'update' function below if you don't understand what's inside self.targets_n
+            # DONE
+            self.baseline_loss = tf.losses.mean_squared_error(self.targets_n, self.baseline_prediction)
+
+            # TODO: define what exactly the optimizer should minimize when updating the baseline
+            # DONE
+            self.baseline_update_op = tf.train.AdamOptimizer(self.learning_rate).minimize(self.baseline_loss)
+
+    #########################
+
+    def run_baseline_prediction(self, obs):
+        # TODO: query the neural net that's our 'baseline' function, as defined by an mlp above
+        # HINT1: query it with observation(s) to get the baseline value(s)
+        # HINT2: see build_baseline_forward_pass (above) to see the tensor that we're interested in
+        # HINT3: this will be very similar to how you implemented get_action (above)
+        # DONE
+        if len(obs.shape)>1:
+            observation = obs
+        else:
+            observation = obs[None]
+
+        pred = self.sess.run(self.baseline_prediction, feed_dict={self.observations_pl: observation})
+        return pred
+
+    def update(self, observations, acs_na, adv_n=None, acs_labels_na=None, qvals=None):
+        assert(self.training, 'Policy must be created with training=True in order to perform training updates...')
+
+        _, loss = self.sess.run([self.train_op, self.loss], feed_dict={self.observations_pl: observations, self.actions_pl: acs_na, self.adv_n: adv_n})
+
+        if self.nn_baseline:
+            targets_n = (qvals - np.mean(qvals))/(np.std(qvals)+1e-8)
+            # TODO: update the nn baseline with the targets_n
+            # HINT1: run an op that you built in define_train_op
+            _, loss = self.sess.run([self.baseline_update_op, self.baseline_loss], feed_dict={
+                self.observations_pl: observations, 
+                self.actions_pl: acs_na, 
+                self.adv_n: adv_n,
+                self.targets_n: targets_n
+                })
+        return loss
 
 #####################################################
 #####################################################

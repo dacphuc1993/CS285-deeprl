@@ -56,6 +56,14 @@ The following files have these:
 $ python cs285/scripts/run_hw3_dqn.py --env_name PongNoFrameskip-v4 --exp_name test_pong
 $ python cs285/scripts/run_hw3_actor_critic.py --env_name CartPole-v0 -n 100 -b 1000 --exp_name 100_1 -ntu 100 -ngsptu 1
 
+python3 cs285/scripts/run_hw3_dqn.py --env_name PongNoFrameskip-v4 --exp_name q1
+python3 cs285/scripts/run_hw3_dqn.py --env_name LunarLander-v2 --exp_name q2_dqn_1 --seed 1
+
+python3 cs285/scripts/run_hw3_dqn.py --env_name LunarLander-v2 --exp_name q2_doubledqn_1 --double_q --seed 1
+
+python3 cs285/scripts/run_hw3_actor_critic.py --env_name CartPole-v0 -n 100 -b 1000 --exp_name 1_1 -ntu 1 -ngsptu 1
+python3 cs285/scripts/run_hw3_actor_critic.py --env_name CartPole-v0 -n 100 -b 1000 --exp_name 1_1 -ntu 10 -ngsptu 10
+
 Flags of relevance, when running the commands above (see pdf for more info):
 -double_q Whether to use double Q learning or not.
 

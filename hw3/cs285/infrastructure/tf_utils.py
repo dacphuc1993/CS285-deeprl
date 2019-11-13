@@ -7,7 +7,15 @@ import os
 def build_mlp(input_placeholder, output_size, scope, n_layers, size, activation=tf.tanh, output_activation=None):
     
     # TODO: GETTHIS from HW1
-
+    # DONE
+    output_placeholder = input_placeholder
+    with tf.variable_scope(scope):
+        for _ in range(n_layers):
+            # TODO_HINT: use tf.layers.dense (specify <input>, <size>, activation=<?>)
+            output_placeholder = tf.layers.dense(output_placeholder, output_size, activation=activation) 
+        # HINT: use tf.layers.dense (specify <input>, <size>, activation=<?>)
+        output_placeholder = tf.layers.dense(output_placeholder, output_size, activation=activation) 
+    return output_placeholder
 
 ############################################
 ############################################

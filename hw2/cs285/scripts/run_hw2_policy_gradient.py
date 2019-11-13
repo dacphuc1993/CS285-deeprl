@@ -16,7 +16,7 @@ class PG_Trainer(object):
             'n_layers': params['n_layers'],
             'size': params['size'],
             'learning_rate': params['learning_rate'],
-            }
+        }
 
         estimate_advantage_args = {
             'gamma': params['discount'],

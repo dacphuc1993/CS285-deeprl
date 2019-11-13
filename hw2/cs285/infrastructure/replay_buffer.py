@@ -71,8 +71,8 @@ class ReplayBuffer(object):
             index = -1
             while num_datapoints_so_far < batch_size:
                 recent_rollout = self.paths[index]
-                index -=1
-                num_recent_rollouts_to_return +=1
+                index -= 1
+                num_recent_rollouts_to_return += 1
                 num_datapoints_so_far += get_pathlength(recent_rollout)
             rollouts_to_return = self.paths[-num_recent_rollouts_to_return:]
             observations, actions, next_observations, terminals, concatenated_rews, unconcatenated_rews = convert_listofrollouts(rollouts_to_return)

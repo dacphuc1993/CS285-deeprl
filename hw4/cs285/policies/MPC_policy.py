@@ -34,6 +34,7 @@ class MPCPolicy(BasePolicy):
     def sample_action_sequences(self, num_sequences, horizon):
         # TODO(Q1) uniformly sample trajectories and return an array of
         # dimensions (num_sequences, horizon, self.ac_dim)
+        random_action_sequences = np.array([num_sequences, horizon, self.ac_dim])
         return random_action_sequences
 
     def get_action(self, obs):
@@ -42,14 +43,13 @@ class MPCPolicy(BasePolicy):
             # print("WARNING: performing random actions.")
             return self.sample_action_sequences(num_sequences=1, horizon=1)[0]
 
-        #sample random actions (Nxhorizon)
+        # sample random actions (N x horizon)
         candidate_action_sequences = self.sample_action_sequences(num_sequences=self.N, horizon=self.horizon)
 
         # a list you can use for storing the predicted reward for each candidate sequence
         predicted_rewards_per_ens = []
 
         for model in self.dyn_models:
-            pass
             # TODO(Q2)
 
             # for each candidate action sequence, predict a sequence of
@@ -57,10 +57,15 @@ class MPCPolicy(BasePolicy):
 
             # once you have a sequence of predicted states from each model in your
             # ensemble, calculate the reward for each sequence using self.env.get_reward (See files in envs to see how to call this)
+            for action_seq in candidate_action_sequences:
+                pred_state = model.get_prediction(obs, action_seq, self.data_statistics)
+                reward, done = self.env.get_reward(obs, action_seq)
+                predicted_rewards_per_ens.append(reward)
 
         # calculate mean_across_ensembles(predicted rewards).
         # the matrix dimensions should change as follows: [ens,N] --> N
-        predicted_rewards = None # TODO(Q2)
+        # TODO(Q2)
+        predicted_rewards = tf.reduce_mean(predicted_rewards_per_ens, axis=1) 
 
         # pick the action sequence and return the 1st element of that sequence
         best_index = None #TODO(Q2)

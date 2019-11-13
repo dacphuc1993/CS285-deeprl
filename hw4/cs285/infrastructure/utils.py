@@ -19,11 +19,15 @@ def calculate_mean_prediction_error(env, action_sequence, models, data_statistic
     for ac in action_sequence:
         pred_states.append(ob)
         action = np.expand_dims(ac,0)
-        ob = # TODO(Q1) Get predicted next state using the model
+        # TODO(Q1) Get predicted next state using the model
+        # DONE
+        ob = perform_actions(ob, action)
     pred_states = np.squeeze(pred_states)
 
     # Calculate the mean prediction error here
-    mpe = # TODO(Q1)
+    # TODO(Q1)
+    # DONE
+    mpe = np.mean(true_states-pred_states)
 
     return mpe, true_states, pred_states
 
@@ -58,16 +62,73 @@ def mean_squared_error(a, b):
 def sample_trajectory(env, policy, max_path_length, render=False, render_mode=('rgb_array')):
 
     # TODO: GETTHIS from HW2
+    # DONE
+    ob = env.reset()
+
+    # init vars
+    obs, acs, rewards, next_obs, terminals, image_obs = [], [], [], [], [], []
+    steps = 0
+    while True:
+
+        # render image of the simulated env
+        if render:
+            if 'rgb_array' in render_mode:
+                if hasattr(env, 'sim'):
+                    if 'track' in env.env.model.camera_names:
+                        image_obs.append(env.sim.render(camera_name='track', height=500, width=500)[::-1])
+                    else:
+                        image_obs.append(env.sim.render(height=500, width=500)[::-1])
+                else:
+                    image_obs.append(env.render(mode=render_mode))
+            if 'human' in render_mode:
+                env.render(mode=render_mode)
+                time.sleep(env.model.opt.timestep)
+
+        # use the most recent ob to decide what to do
+        obs.append(ob)
+        ac = policy.get_action(ob)
+        ac = ac[0]
+        acs.append(ac)
+
+        # take that action and record results
+        ob, rew, done, _ = env.step(ac)
+
+        # record result of taking that action
+        steps += 1
+        next_obs.append(ob)
+        rewards.append(rew)
+
+        # End the rollout if the rollout ended 
+        # Note that the rollout can end due to done, or due to max_path_length
+        rollout_done = done
+        terminals.append(rollout_done)
+        
+        if rollout_done: 
+            break
 
 def sample_trajectories(env, policy, min_timesteps_per_batch, max_path_length, render=False, render_mode=('rgb_array')):
 
     # TODO: GETTHIS from HW1 or HW2
+    # DONE
+    timesteps_this_batch = 0
+    paths = []
+    while timesteps_this_batch < min_timesteps_per_batch:
+        path = sample_trajectory(env, policy, max_path_length, render=render, render_mode=render_mode)
+        path_length = get_pathlength(path)
+        timesteps_this_batch += path_length
+        paths.append(path)
 
     return paths, timesteps_this_batch
 
 def sample_n_trajectories(env, policy, ntraj, max_path_length, render=False, render_mode=('rgb_array')):
     
     # TODO: GETTHIS from HW1 or HW2
+    # DONE
+    paths = []
+
+    for i in range(ntraj):
+        path = sample_trajectory(env, policy, max_path_length, render=render, render_mode=render_mode)
+        paths.append(path)
 
     return paths
 
